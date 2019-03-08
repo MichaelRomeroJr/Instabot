@@ -1,0 +1,109 @@
+# -*- coding: utf-8 -*-
+""" Author: Michael Romero Jr """
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from time import sleep
+from random import randint
+import time
+from time import date
+
+import csv
+
+import os, sys, inspect
+current_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe() ))[0]))
+
+def init_driver():
+    chromedriver = os.path.join(current_folder,"chromedriver.exe") # via this way, you explicitly let Chrome know where to find 
+    driver = webdriver.Chrome(executable_path = chromedriver) # the webdriver.
+    return driver
+
+def AccountLogin(driver, username, password):
+    driver.get("https://instagram.com/accounts/login")
+    sleep(4)
+    el=driver.find_elements_by_tag_name("a")[0]
+    action = webdriver.common.action_chains.ActionChains(driver)
+    action.move_to_element_with_offset(el, 500, 500)
+    action.click()
+    action.perform()
+    
+    driver.find_element_by_name('username').send_keys(username) 
+    driver.find_element_by_name('password').send_keys(password)     
+    buttons = driver.find_elements_by_xpath("//*[contains(text(), 'Log in')]") #Click button by text
+    buttons[0].click() #buttons is a list, so click first element    
+    sleep(5)
+    
+    try: #Close the "Log in from App" Window
+        driver.find_element_by_xpath("//button[@class='_dbnr9']").click()
+    except:
+        pass
+    return
+
+def SaveFollowers(driver):
+    div = driver.find_elements_by_class_name('d7ByH') #This often changes
+    FollowersList=[] 
+    for i in div: #Get Follower's Username
+        i.get_attribute('title')
+        FollowerName = i.text
+        FollowersList.append(FollowerName) 
+    
+    path = "D:\InstagramDatabase.csv"
+    WriteCSV(FollowersList, path)
+    return
+
+def ViewFollowers(driver, targetAccount):
+    driver.get('https://instagram.com/' + targetAccount)
+    
+    """Check How Many Followers Target Account Has """
+    NumberOfFollowersElem = driver.find_element_by_xpath("//*[@id='react-root']/section/main/div/header/section/ul/li[2]/a/span")
+    Followers = NumberOfFollowersElem.get_attribute('title')
+    Followers = Followers.replace(",","")
+    Text_TotalFollowers = "Total Followers: " + Followers
+    TotalFollowers = int(Followers)
+    print(Text_TotalFollowers)
+    
+    """Calculate Number of Pushdowns"""
+    NumOfPushDowns = TotalFollowers / 12
+    
+    """Click 'Followers' and Scroll Through to View Followers """
+    driver.find_element_by_partial_link_text('followers').click()
+    sleep(2)    
+    ScrollBoxElem = driver.find_element_by_xpath("/html/body/div[3]/div/div/div[2]/ul/div/li[1]/div/div[1]/div[2]/div[1]/a") #ScrollBoxElem XPath is XPath of the username in the scroll box
+    Start = time.time()
+    #while FollowersVisible < TotalFollowers:    
+    for i in range(NumOfPushDowns): #Scroll down Follwers list
+        Visible = i*12
+        Text_FollowersVisible = "Number of Accounts Visible: " + str(Visible) 
+        print(Text_FollowersVisible)
+        ScrollBoxElem.send_keys(Keys.END)
+        sleep(5)
+        
+    End = time.time()
+    print(End - Start)
+    
+    return 
+
+def WriteCSV(Followers, path):
+    now = datetime.datetime.now()
+    with open(path, 'wb') as g:    
+        writer = csv.writer(g)
+        writer = csv.writer(g, quoting=csv.QUOTE_ALL)       
+        writer.writerow(['Follower'])       
+        for i in Followers:
+            user = i
+            currentdate = now
+            writer.writerow([user, currentdate])
+    return
+
+def Run():
+    username = input("Username: ")
+    password = input("Password: ")
+    target = input("Target: ")
+    
+    driver = init_driver()    
+    AccountLogin(driver, username, password)
+    ViewFollowers(driver, target)
+    SaveFollowers(driver)
+    print('Completed')
+    return
+
+Run()
