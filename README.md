@@ -1,6 +1,6 @@
 ## Update: [Instabot 2021 version found here](https://github.com/MichaelRomeroJr/Instagram-Bot)
 
-#Instabot 1.0.1 (beta)
+# Instabot 1.0.1 (beta)
 
 About: Engage with specific demographic to draw traffic to your account.
        The target account is an account with your similar demographic.
